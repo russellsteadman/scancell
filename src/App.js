@@ -1,8 +1,24 @@
 import React, { Component } from 'react';
 import logo from './logo.svg';
 import './App.css';
+import YeastS1 from './yeast.jpg';
+import { SerializeImage } from './shared/Utils';
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {};
+
+    if (typeof(Worker) !== 'undefined') {
+      this.worker = new Worker(require('url-loader!./shared/Util.worker.js'));
+    }
+  }
+
+  parseImage = () => {
+    SerializeImage(YeastS1);
+  }
+
   render() {
     return (
       <div className="App">
@@ -19,6 +35,7 @@ class App extends Component {
           >
             Learn React
           </a>
+          <button onClick={this.parseImage}>Serialize</button>
         </header>
       </div>
     );
