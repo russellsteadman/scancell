@@ -4,6 +4,7 @@ import YeastS1 from './yeast.jpg';
 import { SerializeImage, CreateCanvas } from './shared/Utils';
 import UtilWorker from './shared/Util.worker.js';
 import Classy from './shared/Classy';
+import { Microscope } from './shared/Icons';
 
 const cx = Classy([]);
 
@@ -51,12 +52,16 @@ class App extends Component {
       });
     } else if (data.action === 'detected') {
       CreateCanvas(data.pass, this._canvas);
+      this.setState({
+        step: 5
+      });
     } else if (data.action === 'counted') {
       CreateCanvas(data.pass, this._canvas);
-      console.log('New count:', data.pass.count);
-      this.setState({count: data.pass.count});
+      this.setState({
+        count: data.pass.count,
+        step: 7
+      });
     } else if (data.action === 'status') {
-      console.log(data.pass.percent);
       if (data.pass.error) return this.setState({error: true});
       if (data.pass.percent > this.state.percent + 0.01) this.setState({percent: data.pass.percent});
     }
@@ -76,8 +81,6 @@ class App extends Component {
 
     pointStep++;
     if (pointStep === 4) pointStep = 0;
-
-    console.log(points);
 
     this.setState({
       points,
@@ -102,13 +105,19 @@ class App extends Component {
   };
 
   countImage = () => {
-    this.worker.postMessage({action: 'count', pass: this.state.points.slice()});
+    this.setState({step: 6}, () => {
+      this.worker.postMessage({action: 'count', pass: this.state.points.slice()});
+    });
   };
 
   updateConfig = () => {
-    let { wall } = this.state;
+    let { wall, res, mDist, mCont, thresh } = this.state;
     this.worker.postMessage({action: 'config', pass: {
-      wall
+      wall,
+      res,
+      mDist,
+      mCont,
+      thresh
     }});
   };
 
@@ -127,23 +136,38 @@ class App extends Component {
     }
   };
 
+  fileDrop = async (ev) => {
+    ev.preventDefault();
+    if (this.state.step !== 1) return false;
+    if (ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0]) {
+      let data = await SerializeImage(URL.createObjectURL(ev.dataTransfer.files[0]));
+      this.worker.postMessage({action: 'serialize', pass: data});
+    }
+    return false;
+  };
+
+  noEvent = (ev) => {
+    ev.preventDefault();
+    return false;
+  };
+
   render() {
-    let { wall, res, mCont, mDist, thresh, step, percent } = this.state;
+    let { wall, res, mCont, mDist, thresh, step, percent, count } = this.state;
 
     return (
-      <div className={cx('container')}>
+      <div className={cx('container')} onDrop={this.fileDrop} onDragEnter={this.noEvent} onDragOver={this.noEvent}>
         <header className={cx('py-3')}>
           <h1>Yeast Counter</h1>
         </header>
         <div>
-          <div className={cx('ycanvas', {hide: step === 1 || step === 4})}>
+          <div className={cx('ycanvas', {hide: step === 1 || step === 4 || step === 6})}>
             <canvas ref={(ref) => this._canvas = ref} onClick={this.canvasClick}></canvas>
           </div>
 
           {step === 1 ? (<div>
             <p>Upload a photo for processing. Photos have highest accuracy when they are landscape, and when HDR (high dynamic range) enabled.</p>
 
-            <button className={cx('btn', 'btn-dark', 'btn-block')} onClick={() => this._file.click()}>
+            <button className={cx('btn', 'btn-dark', 'btn-block', 'btn-lg')} onClick={() => this._file.click()}>
               Select Photo
             </button>
             <input type='file' className={cx('hide')} ref={(ref) => this._file = ref} onChange={this.fileChange}/>
@@ -151,6 +175,8 @@ class App extends Component {
 
           {step === 2 ? (<div>
             <p>Click on the <b>inner corners</b> of the channel in the following order: <b>bottom left</b> &#x2199;, <b>top left</b> &#x2196;, <b>top right</b> &#x2197;, and <b>bottom right</b> &#x2198;.</p>
+
+            <button className={cx('btn', 'btn-dark', 'btn-block')} onClick={() => this.setState({step: 1, pointStep: 0})}>Change Image</button>
           </div>) : null}
 
           {step === 3 ? (<div>
@@ -163,6 +189,10 @@ class App extends Component {
           </div>) : null}
 
           {step === 4 ? (<div>
+            <div className={cx('text-center', 'micro')}>
+              <Microscope/>
+            </div>
+
             <h3 className={cx('my-3', 'text-center')}>Processing...</h3>
 
             <div className={cx('progress')}>
@@ -172,21 +202,89 @@ class App extends Component {
               </div>
             </div>
 
+            <div className={cx('alert', 'alert-info', 'my-3')}>
+              <b>Did you know?</b> Kombucha, a fermented tea drink, is made from a symbiotic culture of bacteria and yeast (SCOBY).
+            </div>
+          </div>) : null}
+
+          {step === 5 ? (<div>
+            <p>Do the red spots cover the majority of the yeast cells? If they don't, modify the variables below and recalculate. Otherwise, continue.</p>
+
+            <div className={cx('btn-group', 'w-100')}>
+              <button className={cx('btn', 'btn-light', 'w-100')} onClick={this.detectImage}>Recalculate</button>
+              <button className={cx('btn', 'btn-dark', 'w-100')} onClick={this.countImage}>Continue</button>
+            </div>
+
+            <h4 className={cx('mt-3', 'pb-0')}>Variables</h4>
+            <hr/>
+
+            <h5 htmlFor='wall'>Wall Distance Coefficient</h5>
+            <input id='wall' type='number' min='0.01' max='0.15' step='0.005' placeholder='Wall Distance Coefficient' value={wall} onChange={this.numCling.bind(this, 'wall')} className={cx('form-control')}/>
+            <ul>
+              <li>This number should be a fraction between 0.01 and 0.15.</li>
+              <li><b>Increase</b> this number if there is excess red near the walls.</li>
+              <li><b>Decrease</b> this number if cells near the wall are not detected.</li>
+            </ul>
+
+            <h5 htmlFor='res'>Local Contrast Resolution</h5>
+            <input id='res' type='number' min='3' max='50' step='1' placeholder='Local Contrast Resolution' value={res} onChange={this.numCling.bind(this, 'res')} className={cx('form-control')}/>
+            <ul>
+              <li>This number should be a whole number between 3 and 50.</li>
+              <li><b>Increase</b> this number if yeast cells are not being detected or there is a lot of noise.</li>
+              <li><b>Modify</b> this number to find what performs the best. The default is heuristic.</li>
+            </ul>
+
+            <h5 htmlFor='res'>Minimum Contrast</h5>
+            <input type='number' min='1' max='20' step='1' placeholder='Minimum Contrast' value={mCont} onChange={this.numCling.bind(this, 'mCont')} className={cx('form-control')}/>
+            <ul>
+              <li>This number should be a whole number between 1 and 20.</li>
+              <li><b>Increase</b> this number if non-cells are being detected or there is a lot of noise.</li>
+              <li><b>Decrease</b> this number if yeast cells are not being detected.</li>
+            </ul>
+          </div>) : null}
+
+          {step === 6 ? (<div>
+            <div className={cx('text-center', 'micro')}>
+              <Microscope/>
+            </div>
+
+            <h3 className={cx('my-3', 'text-center')}>Processing...</h3>
+
             <div className={cx('alert', 'alert-info')}>
               <b>Did you know?</b> Kombucha, a fermented tea drink, is made from a symbiotic culture of bacteria and yeast (SCOBY).
             </div>
           </div>) : null}
 
-          <button onClick={this.parseImage}>Serialize</button>
-          <button onClick={this.detectImage}>Detect</button>
-          <button onClick={this.countImage}>Count</button>
-          <div>
-            <input type='number' min='0.01' max='0.15' step='0.005' placeholder='Wall Distance Coefficient' value={wall} onChange={this.numCling.bind(this, 'wall')} className={cx('form-control')}/>
-            <input type='number' min='3' max='30' step='1' placeholder='Local Contrast Resolution' value={res} onChange={this.numCling.bind(this, 'res')} className={cx('form-control')}/>
-            <input type='number' min='1' max='20' step='1' placeholder='Minimum Contrast' value={mCont} onChange={this.numCling.bind(this, 'mCont')} className={cx('form-control')}/>
-            <input type='number' min='0.125' max='0.875' step='0.125' placeholder='Cell Size Threshold Coefficient' value={thresh} onChange={this.numCling.bind(this, 'thresh')} className={cx('form-control')}/>
-            <input type='number' min='2' max='10' step='1' placeholder='Cell Minimum Detection Distance' value={mDist} onChange={this.numCling.bind(this, 'mDist')} className={cx('form-control')}/>
-          </div>
+          {step === 7 ? (<div>
+            <h3 className={cx('my-2', 'text-center')}>Cells: {count}</h3>
+
+            <p>Do the dots cover the majority of the yeast cells? If they don't, modify the variables below and recalculate. Otherwise, the cell count is {count}.</p>
+
+            <div className={cx('btn-group', 'w-100')}>
+              <button className={cx('btn', 'btn-light', 'w-100')} onClick={this.countImage}>Recount</button>
+              <button className={cx('btn', 'btn-dark', 'w-100')} onClick={() => this.setState({step: 1, pointStep: 0})}>New Image</button>
+            </div>
+
+            <h4 className={cx('mt-3', 'pb-0')}>Variables</h4>
+            <hr/>
+
+            <h5 htmlFor='mDist'>Cell Minimum Detection Distance</h5>
+            <input id='mDist' type='number' min='2' max='10' step='1' placeholder='Cell Minimum Detection Distance' value={mDist} onChange={this.numCling.bind(this, 'mDist')} className={cx('form-control')}/>
+            <ul>
+              <li>This number should be a whole number between 2 and 10.</li>
+              <li><b>Increase</b> this number if one yeast cell is being counted as many.</li>
+              <li><b>Decrease</b> this number if multiple yeast cells are being counted as one.</li>
+            </ul>
+
+            <h5 htmlFor='thresh'>Cell Size Threshold Coefficient</h5>
+            <input id='thresh' type='number' min='0.125' max='0.875' step='0.125' placeholder='Cell Size Threshold Coefficient' value={thresh} onChange={this.numCling.bind(this, 'thresh')} className={cx('form-control')}/>
+            <ul>
+              <li>This number should be a whole number between 0.125 and 0.875.</li>
+              <li>Try changing the cell minimum detection distance before changing this variable.</li>
+              <li><b>Increase</b> this number if one yeast cell is being counted as many.</li>
+              <li><b>Decrease</b> this number if multiple yeast cells are being counted as one.</li>
+            </ul>
+          </div>) : null}
         </div>
         <footer className={cx('py-4')}>
           Copyright &copy; 2019 Russell Steadman. Some Rights Reserved. This work is licensed under a <a rel='license' href='https://creativecommons.org/licenses/by-sa/4.0/'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.

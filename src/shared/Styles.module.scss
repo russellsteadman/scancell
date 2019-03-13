@@ -6,7 +6,7 @@ $card-border-width: 2px;
 $theme-colors: (
   'royal': #5b31c6
 );
-$font-family-sans-serif: "Roboto Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+$font-family-sans-serif: "Roboto Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
 @import 'bootstrap/scss/bootstrap.scss';
 
@@ -39,6 +39,14 @@ a.no-link {
   svg {
     fill: currentColor;
     height: $font-size-lg;
+  }
+}
+
+.micro {
+  .svg-icon {
+    svg {
+      height: 3em;
+    }
   }
 }
 

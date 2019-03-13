@@ -316,6 +316,7 @@ onmessage = ({data}) => {
             DiamondCount(data.pass);
         } else if (data.action === 'config') {
             config = {...config, ...data.pass};
+            console.log('Config:', config);
         } else if (data.action === 'copy') {
             postMessage({
                 action: 'serialized',
