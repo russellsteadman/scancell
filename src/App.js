@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import './App.css';
-import YeastS1 from './yeast.jpg';
+import YeastDemo from './yeast.jpg';
 import { SerializeImage, CreateCanvas } from './shared/Utils';
 import UtilWorker from './shared/Util.worker.js';
 import Classy from './shared/Classy';
@@ -32,11 +31,6 @@ class App extends Component {
       this.worker.onmessage = this.workerHandler;
     }
   }
-
-  parseImage = async () => {
-    let data = await SerializeImage(YeastS1);
-    this.worker.postMessage({action: 'serialize', pass: data});
-  };
 
   workerHandler = ({ data }) => {
     if (data.action === 'serialized') {
@@ -170,7 +164,17 @@ class App extends Component {
             <button className={cx('btn', 'btn-dark', 'btn-block', 'btn-lg')} onClick={() => this._file.click()}>
               Select Photo
             </button>
+
+            <div className={cx('dragdrop', 'my-2', 'd-flex', 'justify-content-center', 'align-items-center')}>
+              <div>
+                <div className={cx('or')}>OR</div>
+                <div className={cx('text')}>Drag &amp; Drop File</div>
+              </div>
+            </div>
+
             <input type='file' className={cx('hide')} ref={(ref) => this._file = ref} onChange={this.fileChange}/>
+
+            <p>To test the tool, <a href={YeastDemo} download='yeast-demo.jpg'>download a demo image</a>.</p>
           </div>) : null}
 
           {step === 2 ? (<div>
@@ -196,7 +200,7 @@ class App extends Component {
             <h3 className={cx('my-3', 'text-center')}>Processing...</h3>
 
             <div className={cx('progress')}>
-              <div className={cx('progress-bar')} role='progressbar' aria-valuenow={Math.round(percent * 100)}
+              <div className={cx('progress-bar', 'bg-royal')} role='progressbar' aria-valuenow={Math.round(percent * 100)}
               aria-valuemin='0' aria-valuemax='100' style={{width: (percent * 100) + '%'}}>
                 <span className={cx('sr-only')}>{Math.round(percent * 100)}% Complete</span>
               </div>

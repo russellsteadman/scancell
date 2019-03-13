@@ -57,3 +57,20 @@ a.no-link {
     }
   }
 }
+
+.dragdrop {
+  text-align: center;
+  background-color: #ccc;
+  width: 100%;
+  min-height: 45vh;
+  border-radius: 1em;
+
+  .or {
+    font-size: 1.5em;
+  }
+
+  .text {
+    font-size: 2.25em;
+    font-weight: 300;
+  }
+}
