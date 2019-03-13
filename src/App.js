@@ -4,6 +4,7 @@ import { SerializeImage, CreateCanvas } from './shared/Utils';
 import UtilWorker from './shared/Util.worker.js';
 import Classy from './shared/Classy';
 import { Microscope } from './shared/Icons';
+import Facts from './shared/Facts';
 
 const cx = Classy([]);
 
@@ -12,8 +13,7 @@ class App extends Component {
     super(props);
 
     this.state = {
-      // points: [[0, 0], [0, 0], [0, 0], [0, 0]],
-      points: [[ 244, 844 ],[ 214, 636 ],[ 1555, 548 ],[ 1556, 742 ]], // DEBUG
+      points: [[0, 0], [0, 0], [0, 0], [0, 0]],
       pointStep: 0,
       wall: 0.06,
       res: 10,
@@ -23,7 +23,9 @@ class App extends Component {
       percent: 0,
       error: false,
       count: 0,
-      step: 1
+      step: 1,
+      factOne: Facts[Math.ceil(Math.random() * Facts.length) - 1],
+      factTwo: Facts[Math.ceil(Math.random() * Facts.length) - 1]
     };
 
     if (typeof(Worker) !== 'undefined') {
@@ -146,7 +148,7 @@ class App extends Component {
   };
 
   render() {
-    let { wall, res, mCont, mDist, thresh, step, percent, count } = this.state;
+    let { wall, res, mCont, mDist, thresh, step, percent, count, factOne, factTwo } = this.state;
 
     return (
       <div className={cx('container')} onDrop={this.fileDrop} onDragEnter={this.noEvent} onDragOver={this.noEvent}>
@@ -207,7 +209,7 @@ class App extends Component {
             </div>
 
             <div className={cx('alert', 'alert-info', 'my-3')}>
-              <b>Did you know?</b> Kombucha, a fermented tea drink, is made from a symbiotic culture of bacteria and yeast (SCOBY).
+              <b>Did you know?</b> {factOne}
             </div>
           </div>) : null}
 
@@ -255,7 +257,7 @@ class App extends Component {
             <h3 className={cx('my-3', 'text-center')}>Processing...</h3>
 
             <div className={cx('alert', 'alert-info')}>
-              <b>Did you know?</b> Kombucha, a fermented tea drink, is made from a symbiotic culture of bacteria and yeast (SCOBY).
+              <b>Did you know?</b> {factTwo}
             </div>
           </div>) : null}
 
