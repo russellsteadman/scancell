@@ -68,8 +68,10 @@ class App extends Component {
     if (step !== 2) return;
     points = points.slice();
 
-    let {x, y} = this._canvas.getBoundingClientRect();
+    let {x, y, left, top} = this._canvas.getBoundingClientRect();
 
+    if (!x && left) x = left;
+    if (!y && top) y = top;
     x = Math.round(clientX - x);
     y = Math.round(clientY - y);
 
