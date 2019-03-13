@@ -291,7 +291,7 @@ class App extends Component {
           </div>) : null}
         </div>
         <footer className={cx('py-4')}>
-          Copyright &copy; 2019 Russell Steadman. Some Rights Reserved. This work is licensed under a <a rel='license' href='https://creativecommons.org/licenses/by-sa/4.0/'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+          Copyright &copy; 2019 <a href='https://www.russellsteadman.com/'>Russell Steadman</a>. Some Rights Reserved. This work is licensed under a <a rel='license' href='https://creativecommons.org/licenses/by-sa/4.0/'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.
         </footer>
       </div>
     );
