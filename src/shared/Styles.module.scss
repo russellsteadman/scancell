@@ -1,0 +1,51 @@
+$link-color: #5b31c6;
+$body-bg: #f2f2f2;
+$card-spacer-y: .4rem;
+$card-spacer-x: 1rem;
+$card-border-width: 2px;
+$theme-colors: (
+  'royal': #5b31c6
+);
+$font-family-sans-serif: "Roboto Condensed", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+@import 'bootstrap/scss/bootstrap.scss';
+
+html, body, :global(#root) {
+  height: 100%;
+}
+
+a.no-link {
+  text-decoration: none !important;
+}
+
+.ycanvas {
+  height: 70vh;
+  width: 100%;
+  overflow: scroll;
+  canvas {
+    overflow: scroll;
+  }
+}
+
+.hide {
+  display: none;
+  visibility: hidden;
+}
+
+.svg-icon {
+  display: flex;
+  justify-content: center;
+
+  svg {
+    fill: currentColor;
+    height: $font-size-lg;
+  }
+}
+
+.inline {
+  .svg-icon {
+    svg {
+      height: $font-size-base;
+    }
+  }
+}
