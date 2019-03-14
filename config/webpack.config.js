@@ -23,9 +23,10 @@ const getClientEnvironment = require('./env');
 const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
 const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpackPlugin');
 const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
+const purgecss = require('@fullhuman/postcss-purgecss');
 
 // Source maps are resource heavy and can cause out of memory issue for large source files.
-const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
+const shouldUseSourceMap = false;
 // Some apps do not need the benefits of saving a web request, so not inlining the chunk
 // makes for a smoother build process.
 const shouldInlineRuntimeChunk = process.env.INLINE_RUNTIME_CHUNK !== 'false';
@@ -88,15 +89,27 @@ module.exports = function(webpackEnv) {
           // Necessary for external CSS imports to work
           // https://github.com/facebook/create-react-app/issues/2677
           ident: 'postcss',
-          plugins: () => [
-            require('postcss-flexbugs-fixes'),
-            require('postcss-preset-env')({
-              autoprefixer: {
-                flexbox: 'no-2009',
-              },
-              stage: 3,
-            }),
-          ],
+          plugins: () => {
+            let plugins = [
+              require('postcss-flexbugs-fixes'),
+              require('postcss-preset-env')({
+                autoprefixer: {
+                  flexbox: 'no-2009',
+                },
+                stage: 3,
+              }),
+            ];
+            if (isEnvProduction) plugins.push(purgecss({
+              content: [
+                  path.join(paths.appPublic, './*.html'),
+                  path.join(paths.appSrc, './*.js'),
+                  path.join(paths.appSrc, './**/*.js'),
+                  path.join(paths.appSrc, './**/**/*.js'),
+                  path.join(paths.appSrc, './**/**/**/*.js')
+              ]
+            }));
+            return plugins;
+          },
           sourceMap: isEnvProduction && shouldUseSourceMap,
         },
       },
@@ -588,7 +601,7 @@ module.exports = function(webpackEnv) {
         new WorkboxWebpackPlugin.GenerateSW({
           clientsClaim: true,
           exclude: [/\.map$/, /asset-manifest\.json$/],
-          importWorkboxFrom: 'cdn',
+          importWorkboxFrom: 'local',
           navigateFallback: publicUrl + '/index.html',
           navigateFallbackBlacklist: [
             // Exclude URLs starting with /_, as they're likely an API call

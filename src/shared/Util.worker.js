@@ -1,5 +1,6 @@
 let imageArray, imageWidth, imageHeight, avgGray, cellArray;
 
+// Default configuration
 let config = {
     wall: 0.06,
     res: 10,
@@ -8,6 +9,7 @@ let config = {
     mCont: 3,
 };
 
+// Emits percent completion or an error
 const emitStatus = (percent, error) => {
     postMessage({
         action: 'status',
@@ -18,6 +20,7 @@ const emitStatus = (percent, error) => {
     });
 };
 
+// Take a coordinate and a set of 3+ coordinates to check if point lies within
 const pointInPoly = (point, vs) => {
     const x = point[0], y = point[1];
 
@@ -29,13 +32,7 @@ const pointInPoly = (point, vs) => {
     return inside;
 };
 
-/*
-    Get range returns ranges rtl then ttb
-    ex.
-    a b
-    c d
-    becomes [a, b, c, d]
-*/
+// Returns ranges of grayscale values rtl then ttb from imageArray
 const getRange = (x1, y1, x2, y2) => {
     let xLen = Math.abs(x2 - x1) + 1;
     let xStart = x1 > x2 ? x2 : x1;
@@ -53,6 +50,7 @@ const getRange = (x1, y1, x2, y2) => {
     return range;
 };
 
+// Calculates the average gray value at a fixed resolution
 const calcAvgGray = () => {
     const hCells = Math.ceil(imageHeight / config.res), wCells = Math.ceil(imageWidth / config.res);
     let fMatrix, sum, divisor;
@@ -76,6 +74,7 @@ const calcAvgGray = () => {
     }
 };
 
+// Gets the average gray value for a certain coordinate
 const getAverage = (i) => {
     let wCells = Math.ceil(imageWidth / config.res);
     let cidx = Math.floor((i - i % imageWidth) / imageWidth / config.res) * wCells + Math.floor(i % imageWidth / config.res);
@@ -83,14 +82,15 @@ const getAverage = (i) => {
     return avgGray[cidx];
 };
 
+// Gets the contrast of a point against the localized average
 const getContrast = (i) => (imageArray[i] - getAverage(i / 4));
 
+// Serializes an image to grayscale
 const Serialize = ({data, height, width}) => {
     imageArray = new Uint8ClampedArray(data.length);
     imageWidth = width;
     imageHeight = height;
 
-    /* Make black & white */
     for (let i = 0; i < data.length; i += 4) {
         let avg = Math.round((data[i] + data[i + 1] + data[i + 2])/3);
 
@@ -110,6 +110,7 @@ const Serialize = ({data, height, width}) => {
     });
 };
 
+// Cuts off unused parts of an image for visual confirmation
 const Rectangulate = (points) => {
     let newImage = new Uint8ClampedArray(imageArray.length);
     newImage.set(imageArray);
@@ -135,6 +136,7 @@ const Rectangulate = (points) => {
     });
 };
 
+// Recursively undetects areas adjoined to initial point
 const DestroyAround = (i) => {
     if (cellArray[i] === 1) {
         cellArray[i] = 0;
@@ -153,6 +155,7 @@ const DestroyAround = (i) => {
     }
 };
 
+// Detects high contrast areas
 const Detect = (points) => {
     calcAvgGray();
 
@@ -162,6 +165,7 @@ const Detect = (points) => {
     let arrayCopy = new Uint8ClampedArray(imageArray.length);
     arrayCopy.set(imageArray);
 
+    // Do initial detection
     for (let i = 0; i < imageArray.length; i += 4) {
         let x = (i % (4 * imageWidth)) / 4;
         let y = (i - 4 * x) / imageWidth / 4;
@@ -175,8 +179,6 @@ const Detect = (points) => {
         }
     }
 
-    // Detect tube width in pixels
-
     let sideLengths = points.map((p1, idx) => {
         let p2 = idx === 3 ? points[0] : points[idx + 1];
         return Math.pow(Math.pow(p1[0] - p2[0], 2) + Math.pow(p1[1] - p2[1], 2), 0.5);
@@ -187,6 +189,7 @@ const Detect = (points) => {
         return a;
     }, sideLengths[0]) * config.wall);
 
+    // Remove detection of walls
     for (let i in cellArray) {
         let x = i % imageWidth;
         let y = (i - x) / imageWidth;
@@ -204,6 +207,7 @@ const Detect = (points) => {
         }
     }
 
+    // Add color for detection
     for (let i in cellArray) {
         if (i % 100000 === 0) emitStatus(0.125 * i / cellArray.length + 0.875);
 
@@ -226,6 +230,7 @@ const Detect = (points) => {
     imageArray.set(arrayCopy);
 };
 
+// Generates the coordinates of a diamond of certain distance around a point
 const DiamondCoords = (i, distance) => {
     let coords = [];
     i = Number(i);
@@ -239,7 +244,7 @@ const DiamondCoords = (i, distance) => {
     return coords;
 };
 
-// Calculates the maximum diamond
+// Calculates the maximum diamond that could encapsule a point with a certain tolerance
 const MaxDiamond = (i, distance) => {
     if (!distance) distance = 1;
     i = Number(i);
@@ -260,6 +265,7 @@ const MaxDiamond = (i, distance) => {
     return distance;
 };
 
+// Count the diamond structures encapsulating the high contrast regions
 const DiamondCount = (points) => {
     let count = 0;
 
@@ -303,6 +309,7 @@ const DiamondCount = (points) => {
     imageArray.set(arrayCopyTwo);
 };
 
+// Respond to messages from the main thread
 onmessage = ({data}) => {
     console.log('Running action:', data.action);
     try {

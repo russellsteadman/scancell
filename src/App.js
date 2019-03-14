@@ -13,27 +13,35 @@ class App extends Component {
     super(props);
 
     this.state = {
+      /* Points */
       points: [[0, 0], [0, 0], [0, 0], [0, 0]],
       pointStep: 0,
+      /* Config variables */
       wall: 0.06,
       res: 10,
       mCont: 3,
       thresh: 0.5,
       mDist: 3,
+      /* Part completion */
       percent: 0,
       error: false,
+      /* Count */
       count: 0,
+      /* Processing step */
       step: 1,
+      /* Fun facts */
       factOne: Facts[Math.ceil(Math.random() * Facts.length) - 1],
       factTwo: Facts[Math.ceil(Math.random() * Facts.length) - 1]
     };
 
+    // Set up web worker
     if (typeof(Worker) !== 'undefined') {
       this.worker = UtilWorker();
       this.worker.onmessage = this.workerHandler;
     }
   }
 
+  /* Handle worker messages */
   workerHandler = ({ data }) => {
     if (data.action === 'serialized') {
       CreateCanvas(data.pass, this._canvas);
@@ -63,6 +71,7 @@ class App extends Component {
     }
   };
 
+  /* Respond to clicks on the canvas to rectangulate the channel */
   canvasClick = ({clientX, clientY}) => {
     let { points, pointStep, step } = this.state;
     if (step !== 2) return;
@@ -88,6 +97,7 @@ class App extends Component {
     });
   };
 
+  /* Detect high contrast in the image */
   detectImage = () => {
     this.setState({
       step: 4,
@@ -97,17 +107,20 @@ class App extends Component {
     });
   };
 
+  /* Redo the rectangulation */
   recopyImage = () => {
     this.worker.postMessage({action: 'copy', pass: null});
     this.setState({step: 2});
   };
 
+  /* Count the cells */
   countImage = () => {
     this.setState({step: 6}, () => {
       this.worker.postMessage({action: 'count', pass: this.state.points.slice()});
     });
   };
 
+  /* Update the web worker config with the state */
   updateConfig = () => {
     let { wall, res, mDist, mCont, thresh } = this.state;
     this.worker.postMessage({action: 'config', pass: {
@@ -119,6 +132,7 @@ class App extends Component {
     }});
   };
 
+  /* Statefully update worker configuration variables */
   numCling(name, ev) {
     this.setState({
       [name]: ev.target.value === '' ? '' : Number(ev.target.value)
@@ -127,6 +141,7 @@ class App extends Component {
     });
   }
 
+  /* Handle files through explicit selection */
   fileChange = async (ev) => {
     if (ev.target.files && ev.target.files[0]) {
       let data = await SerializeImage(URL.createObjectURL(ev.target.files[0]));
@@ -134,6 +149,7 @@ class App extends Component {
     }
   };
 
+  /* Handle files through drag & drop */
   fileDrop = async (ev) => {
     ev.preventDefault();
     if (this.state.step !== 1) return false;
@@ -144,6 +160,7 @@ class App extends Component {
     return false;
   };
 
+  /* Disable some events (necessary for drag & drop) */
   noEvent = (ev) => {
     ev.preventDefault();
     return false;
