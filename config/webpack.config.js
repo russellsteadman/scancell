@@ -24,6 +24,7 @@ const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
 const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpackPlugin');
 const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
 const purgecss = require('@fullhuman/postcss-purgecss');
+const PreloadWebpackPlugin = require('preload-webpack-plugin');
 
 // Source maps are resource heavy and can cause out of memory issue for large source files.
 const shouldUseSourceMap = false;
@@ -554,6 +555,12 @@ module.exports = function(webpackEnv) {
       // in `package.json`, in which case it will be the pathname of that URL.
       // In development, this will be an empty string.
       new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
+
+      isEnvProduction && new PreloadWebpackPlugin({
+        fileWhitelist: [/\.worker\.js/],
+        rel: 'preload',
+        as: 'script',
+      }),
       // This gives some necessary context to module not found errors, such as
       // the requesting resource.
       new ModuleNotFoundPlugin(paths.appPath),
