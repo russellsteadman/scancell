@@ -1,11 +1,13 @@
 {
-  "main.css": "/static/css/main.f2ff2330.chunk.css",
+  "main.css": "/static/css/main.dba3835e.chunk.css",
   "main.js": "/static/js/main.1e058423.chunk.js",
   "runtime~main.js": "/static/js/runtime~main.03258195.js",
+  "static/css/2.54916b13.chunk.css": "/static/css/2.54916b13.chunk.css",
   "static/js/2.5152b515.chunk.js": "/static/js/2.5152b515.chunk.js",
   "195ff23df7940fa4801a.worker.js": "/195ff23df7940fa4801a.worker.js",
   "index.html": "/index.html",
-  "precache-manifest.cc7db91aa73aaf08b660a96bbf28f864.js": "/precache-manifest.cc7db91aa73aaf08b660a96bbf28f864.js",
+  "precache-manifest.a982d986a91f9c7fd27d82feb26ce5c0.js": "/precache-manifest.a982d986a91f9c7fd27d82feb26ce5c0.js",
   "service-worker.js": "/service-worker.js",
+  "static/media/Styles.module.scss": "/static/media/open-sans-latin-800italic.79b58175.woff",
   "static/media/yeast.jpg": "/static/media/yeast.0f9c774a.jpg"
 }
