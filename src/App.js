@@ -314,7 +314,8 @@ class App extends Component {
         </div>
         <footer className={cx('py-2')}>
           <hr/>
-          <div>Copyright &copy; 2019 <a href={'https://www.russellsteadman.com/?utm_source=scancell&utm_medium=copyright'} target='_blank' rel='noopener noreferrer'>Russell Steadman</a>. Some Rights Reserved. This work is licensed under a <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='license noopener noreferrer'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.</div>
+          <div className={cx('text-center')}><a href='https://github.com/teamtofu/scancell' target='_blank' rel='noopener noreferrer'>GitHub</a> &middot; <a href={'https://github.com/teamtofu/scancell/issues/new?assignees=teamtofu&labels=bug%2C+unresolved&template=bug_report.md&title='} target='_blank' rel='noopener noreferrer'>Report an Issue</a></div>
+          <div className={cx('pt-2', 'pb-3')}>Copyright &copy; 2019 <a href={'https://www.russellsteadman.com/?utm_source=scancell&utm_medium=copyright'} target='_blank' rel='noopener noreferrer'>Russell Steadman</a>. Some Rights Reserved. This work is licensed under a <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='license noopener noreferrer'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.</div>
         </footer>
       </div>
     );
