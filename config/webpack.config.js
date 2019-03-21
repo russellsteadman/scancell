@@ -344,7 +344,12 @@ module.exports = function(webpackEnv) {
               test: /\.worker\.(js|mjs|jsx|ts|tsx)$/,
               include: paths.appSrc,
               use: [
-                require.resolve('worker-loader'),
+                {
+                  loader: require.resolve('worker-loader'),
+                  options: {
+                    fallback: true
+                  },
+                },
                 {
                   loader: require.resolve('babel-loader'),
                   options: {
@@ -556,11 +561,16 @@ module.exports = function(webpackEnv) {
       // In development, this will be an empty string.
       new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
 
-      isEnvProduction && new PreloadWebpackPlugin({
-        fileWhitelist: [/\.worker\.js/],
+      /*isEnvProduction && new PreloadWebpackPlugin({
         rel: 'preload',
-        as: 'script',
-      }),
+        include: 'allChunks',
+        as: (entry) => {
+          if (/\.css$/.test(entry)) return 'style';
+          if (/\.woff$/.test(entry)) return 'font';
+          if (/\.(png|jp?eg)$/.test(entry)) return 'image';
+          return 'script';
+        },
+      }),*/
       // This gives some necessary context to module not found errors, such as
       // the requesting resource.
       new ModuleNotFoundPlugin(paths.appPath),

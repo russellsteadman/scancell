@@ -172,7 +172,8 @@ class App extends Component {
     return (
       <div className={cx('container')} onDrop={this.fileDrop} onDragEnter={this.noEvent} onDragOver={this.noEvent}>
         <header className={cx('py-3')}>
-          <h1>Yeast Counter</h1>
+          <h1 className={cx('mb-1')}>Scan Cell</h1>
+          <div className={cx('small', 'text-muted')}><i>Yeast Counter for FEH Nano</i></div>
         </header>
         <div>
           <div className={cx('ycanvas', {hide: step === 1 || step === 4 || step === 6})}>
@@ -311,8 +312,9 @@ class App extends Component {
             </ul>
           </div>) : null}
         </div>
-        <footer className={cx('py-4')}>
-          Copyright &copy; 2019 <a href='https://www.russellsteadman.com/'>Russell Steadman</a>. Some Rights Reserved. This work is licensed under a <a rel='license' href='https://creativecommons.org/licenses/by-sa/4.0/'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+        <footer className={cx('py-2')}>
+          <hr/>
+          <div>Copyright &copy; 2019 <a href={'https://www.russellsteadman.com/?utm_source=scancell&utm_medium=copyright'} target='_blank' rel='noopener noreferrer'>Russell Steadman</a>. Some Rights Reserved. This work is licensed under a <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='license noopener noreferrer'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.</div>
         </footer>
       </div>
     );
