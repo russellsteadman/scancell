@@ -173,7 +173,7 @@ class App extends Component {
       <div className={cx('container')} onDrop={this.fileDrop} onDragEnter={this.noEvent} onDragOver={this.noEvent}>
         <header className={cx('py-3')}>
           <h1 className={cx('mb-1')}>Scan Cell</h1>
-          <div className={cx('small', 'text-muted')}><i>Yeast Counter for FEH Nano</i></div>
+          <div className={cx('small', 'muted')}><i>Yeast Counter for FEH Nano</i></div>
         </header>
         <div>
           <div className={cx('ycanvas', {hide: step === 1 || step === 4 || step === 6})}>

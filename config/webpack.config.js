@@ -17,7 +17,6 @@ const InterpolateHtmlPlugin = require('react-dev-utils/InterpolateHtmlPlugin');
 const WorkboxWebpackPlugin = require('workbox-webpack-plugin');
 const WatchMissingNodeModulesPlugin = require('react-dev-utils/WatchMissingNodeModulesPlugin');
 const ModuleScopePlugin = require('react-dev-utils/ModuleScopePlugin');
-const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
 const paths = require('./paths');
 const getClientEnvironment = require('./env');
 const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
@@ -25,6 +24,8 @@ const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpack
 const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
 const purgecss = require('@fullhuman/postcss-purgecss');
 const PreloadWebpackPlugin = require('preload-webpack-plugin');
+const PrerenderSPAPlugin = require('prerender-spa-plugin');
+const JSDomRenderer = require('@prerenderer/renderer-jsdom'); 
 
 // Source maps are resource heavy and can cause out of memory issue for large source files.
 const shouldUseSourceMap = false;
@@ -463,7 +464,7 @@ module.exports = function(webpackEnv) {
                 importLoaders: 1,
                 sourceMap: isEnvProduction && shouldUseSourceMap,
                 modules: true,
-                getLocalIdent: getCSSModuleLocalIdent,
+                localIdentName: isEnvProduction ? '[hash:4]' : '[local]-[hash:4]',
               }),
             },
             // Opt-in support for SASS (using .scss or .sass extensions).
@@ -494,7 +495,7 @@ module.exports = function(webpackEnv) {
                   importLoaders: 2,
                   sourceMap: isEnvProduction && shouldUseSourceMap,
                   modules: true,
-                  getLocalIdent: getCSSModuleLocalIdent,
+                  localIdentName: isEnvProduction ? '[hash:4]' : '[local]-[hash:4]',
                 },
                 'sass-loader'
               ),
@@ -627,6 +628,26 @@ module.exports = function(webpackEnv) {
             // public/ and not a SPA route
             new RegExp('/[^/]+\\.[^/]+$'),
           ],
+        }),
+
+      isEnvProduction &&
+        new PrerenderSPAPlugin({
+          // Required - The path to the webpack-outputted app to prerender.
+          staticDir: paths.appBuild,
+          // Required - Routes to render.
+          routes: ['/'],
+
+          postProcess: (context) => {
+            if (context.route.endsWith('.html')) context.outputPath = path.join(paths.appBuild, context.route);
+            return context;
+          },
+
+          renderer: new JSDomRenderer({
+            renderAfterElementExists: '#root *',
+            maxConcurrentRoutes: 5,
+            injectProperty: '_pre',
+            inject: true,
+          }),
         }),
       // TypeScript type checking
       useTypeScript &&
