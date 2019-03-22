@@ -21,9 +21,8 @@ const emitStatus = (percent, error) => {
 };
 
 // Take a coordinate and a set of 3+ coordinates to check if point lies within
-const pointInPoly = (point, vs) => {
-    const x = point[0], y = point[1];
-
+// pointInPoly, modified - MIT (c) 2016 James Halliday
+const pointInPoly = (x, y, vs) => {
     let inside = false;
     for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
         if (((vs[i][1] > y) !== (vs[j][1] > y)) && (x < (vs[j][0] - vs[i][0]) * (y - vs[i][1]) / (vs[j][1] - vs[i][1]) + vs[i][0])) inside = !inside;
@@ -119,7 +118,7 @@ const Rectangulate = (points) => {
         let x = (i % (4 * imageWidth)) / 4;
         let y = (i - 4 * x) / imageWidth / 4;
 
-        if (!pointInPoly([x, y], points)) {
+        if (!pointInPoly(x, y, points)) {
             newImage[i] = 0;
             newImage[i + 1] = 0;
             newImage[i + 2] = 0;
@@ -137,6 +136,7 @@ const Rectangulate = (points) => {
 };
 
 // Recursively undetects areas adjoined to initial point
+/*
 const DestroyAround = (i) => {
     if (cellArray[i] === 1) {
         cellArray[i] = 0;
@@ -154,6 +154,7 @@ const DestroyAround = (i) => {
         }
     }
 };
+*/
 
 // Detects high contrast areas
 const Detect = (points) => {
@@ -172,12 +173,14 @@ const Detect = (points) => {
 
         if (i % 80000 === 0) emitStatus(0.4 * i / imageArray.length + 0.1);
 
-        if (pointInPoly([x, y], points) && getContrast(i) <= -1 * config.mCont) {
+        if (pointInPoly(x, y, points) && getContrast(i) <= -1 * config.mCont) {
             cellArray[i / 4] = 1;
         } else {
             cellArray[i / 4] = 0;
         }
     }
+
+    emitStatus(0.5);
 
     let sideLengths = points.map((p1, idx) => {
         let p2 = idx === 3 ? points[0] : points[idx + 1];
@@ -197,15 +200,18 @@ const Detect = (points) => {
         if (i % 20000 === 0) emitStatus(0.375 * i / cellArray.length + 0.5);
 
         if (
-            pointInPoly([x, y], points) && 
-            (!pointInPoly([x, y + sideMargin], points)
-            || !pointInPoly([x, y - sideMargin], points)
-            || !pointInPoly([x - sideMargin, y], points)
-            || !pointInPoly([x + sideMargin, y], points))
+            pointInPoly(x, y, points) && 
+            (!pointInPoly(x, y + sideMargin, points)
+            || !pointInPoly(x, y - sideMargin, points)
+            || !pointInPoly(x - sideMargin, y, points)
+            || !pointInPoly(x + sideMargin, y, points))
         ) {
-            DestroyAround(i);
+            // DestroyAround(i);
+            cellArray[i] = 0;
         }
     }
+
+    emitStatus(0.875);
 
     // Add color for detection
     for (let i in cellArray) {
