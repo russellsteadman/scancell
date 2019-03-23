@@ -31,7 +31,9 @@ class App extends Component {
       step: 1,
       /* Fun facts */
       factOne: Facts[Math.ceil(Math.random() * Facts.length) - 1],
-      factTwo: Facts[Math.ceil(Math.random() * Facts.length) - 1]
+      factTwo: Facts[Math.ceil(Math.random() * Facts.length) - 1],
+      /* PWA install */
+      installable: false
     };
 
     // Set up web worker
@@ -39,6 +41,13 @@ class App extends Component {
       this.worker = UtilWorker();
       this.worker.onmessage = this.workerHandler;
     }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      this.installPrompt = e;
+      this.setState({installable: true});
+    });
   }
 
   /* Handle worker messages */
@@ -166,8 +175,15 @@ class App extends Component {
     return false;
   };
 
+  /* Allow PWA installs */
+  install = () => {
+    if (this.installPrompt) this.installPrompt.prompt();
+    this.installPrompt = null;
+    this.setState({installable: false});
+  };
+
   render() {
-    let { wall, res, mCont, mDist, thresh, step, percent, count, factOne, factTwo } = this.state;
+    let { wall, res, mCont, mDist, thresh, step, percent, count, factOne, factTwo, installable } = this.state;
 
     return (
       <div className={cx('container')} onDrop={this.fileDrop} onDragEnter={this.noEvent} onDragOver={this.noEvent}>
@@ -314,7 +330,7 @@ class App extends Component {
         </div>
         <footer className={cx('py-2')}>
           <hr/>
-          <div className={cx('text-center')}><a href='https://github.com/teamtofu/scancell' target='_blank' rel='noopener noreferrer'>GitHub</a> &middot; <a href={'https://github.com/teamtofu/scancell/issues/new?assignees=teamtofu&labels=bug%2C+unresolved&template=bug_report.md&title='} target='_blank' rel='noopener noreferrer'>Report an Issue</a></div>
+          <div className={cx('text-center')}>{installable ? <span><a href='#install' onClick={this.install}>Install</a> &middot; </span> : null}<a href='https://github.com/teamtofu/scancell' target='_blank' rel='noopener noreferrer'>GitHub</a> &middot; <a href={'https://github.com/teamtofu/scancell/issues/new?assignees=teamtofu&labels=bug%2C+unresolved&template=bug_report.md&title='} target='_blank' rel='noopener noreferrer'>Report an Issue</a></div>
           <div className={cx('pt-2', 'pb-3')}>Copyright &copy; 2019 <a href={'https://www.russellsteadman.com/?utm_source=scancell&utm_medium=copyright'} target='_blank' rel='noopener noreferrer'>Russell Steadman</a>. Some Rights Reserved. This work is licensed under a <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='license noopener noreferrer'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.</div>
         </footer>
       </div>
