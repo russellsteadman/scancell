@@ -27,3 +27,21 @@ export const CreateCanvas = async ({height, width, data}, canvas) => {
     imageData.data.set(data);
     ctx.putImageData(imageData, 0, 0);
 };
+
+global.lastBlob = global.lastBlob || null;
+
+export const DownloadCanvas = async (canvas) => {
+    if (global.lastBlob) {
+        try {
+            URL.revokeObjectURL(global.lastBlob);
+        } catch (e) {}
+    }
+
+    return await new Promise((res, rej) => {
+        canvas.toBlob((blob) => {
+            let download = URL.createObjectURL(blob);
+            global.lastBlob = download;
+            res(download);
+        }, 'image/jpeg', 0.95);
+    });
+};

@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import YeastDemo from './yeast.jpg';
-import { SerializeImage, CreateCanvas } from './shared/Utils';
+import { SerializeImage, CreateCanvas, DownloadCanvas } from './shared/Utils';
 import UtilWorker from './shared/Util.worker.js';
 import Classy from './shared/Classy';
 import { Microscope } from './shared/Icons';
@@ -33,7 +33,9 @@ class App extends Component {
       factOne: Facts[Math.ceil(Math.random() * Facts.length) - 1],
       factTwo: Facts[Math.ceil(Math.random() * Facts.length) - 1],
       /* PWA install */
-      installable: false
+      installable: false,
+      /* Canvas download state */
+      download: null
     };
 
     // Set up web worker
@@ -110,7 +112,8 @@ class App extends Component {
   detectImage = () => {
     this.setState({
       step: 4,
-      percent: 0
+      percent: 0,
+      download: null
     }, () => {
       this.worker.postMessage({action: 'detect', pass: this.state.points.slice()});
     });
@@ -124,7 +127,10 @@ class App extends Component {
 
   /* Count the cells */
   countImage = () => {
-    this.setState({step: 6}, () => {
+    this.setState({
+      step: 6,
+      download: null
+    }, () => {
       this.worker.postMessage({action: 'count', pass: this.state.points.slice()});
     });
   };
@@ -182,8 +188,16 @@ class App extends Component {
     this.setState({installable: false});
   };
 
+  download = async () => {
+    if (this.state.download) return;
+    
+    this.setState({download: true});
+    const downloadURL = await DownloadCanvas(this._canvas);
+    this.setState({download: downloadURL});
+  };
+
   render() {
-    let { wall, res, mCont, mDist, thresh, step, percent, count, factOne, factTwo, installable } = this.state;
+    let { wall, res, mCont, mDist, thresh, step, percent, count, factOne, factTwo, installable, download } = this.state;
 
     return (
       <div className={cx('container')} onDrop={this.fileDrop} onDragEnter={this.noEvent} onDragOver={this.noEvent}>
@@ -257,6 +271,12 @@ class App extends Component {
               <button className={cx('btn', 'btn-dark', 'w-100')} onClick={this.countImage}>Continue</button>
             </div>
 
+            <a href={typeof download === 'string' ? download : '#download'} {...(typeof download === 'string' ? {download: 'yeast-contrast.jpg'} : {})} className={cx('no-link')}>
+              <div className={cx('btn', 'btn-royal', 'btn-block', 'my-2', {disabled: download === true})} onClick={this.download}>
+                {download === true ? 'Preparing...' : typeof download === 'string' ? 'Click to Download' : 'Prepare Image Download'}
+              </div>
+            </a>
+
             <h4 className={cx('mt-3', 'pb-0')}>Variables</h4>
             <hr/>
 
@@ -304,8 +324,14 @@ class App extends Component {
 
             <div className={cx('btn-group', 'w-100')}>
               <button className={cx('btn', 'btn-light', 'w-100')} onClick={this.countImage}>Recount</button>
-              <button className={cx('btn', 'btn-dark', 'w-100')} onClick={() => this.setState({step: 1, pointStep: 0})}>New Image</button>
+              <button className={cx('btn', 'btn-dark', 'w-100')} onClick={() => this.setState({step: 1, pointStep: 0, download: null})}>New Image</button>
             </div>
+
+            <a href={typeof download === 'string' ? download : '#download'} {...(typeof download === 'string' ? {download: 'yeast-count.jpg'} : {})} className={cx('no-link')}>
+              <div className={cx('btn', 'btn-royal', 'btn-block', 'my-2', {disabled: download === true})} onClick={this.download}>
+                {download === true ? 'Preparing...' : typeof download === 'string' ? 'Click to Download' : 'Prepare Image Download'}
+              </div>
+            </a>
 
             <h4 className={cx('mt-3', 'pb-0')}>Variables</h4>
             <hr/>
