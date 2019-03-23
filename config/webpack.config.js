@@ -633,9 +633,10 @@ module.exports = function(webpackEnv) {
       isEnvProduction &&
         new PrerenderSPAPlugin({
           // Required - The path to the webpack-outputted app to prerender.
-          staticDir: paths.appBuild,
+          staticDir: paths.appOutput,
+          indexPath: path.join(paths.appBuild, './index.html'),
           // Required - Routes to render.
-          routes: ['/'],
+          routes: [''].map((a) => paths.servedPath + a),
 
           postProcess: (context) => {
             if (context.route.endsWith('.html')) context.outputPath = path.join(paths.appBuild, context.route);
