@@ -60,6 +60,9 @@ process.env.NODE_PATH = (process.env.NODE_PATH || '')
 // injected into the application via DefinePlugin in Webpack configuration.
 const REACT_APP = /^REACT_APP_/i;
 
+const argv = process.argv.slice(2);
+const isDesktop = argv.indexOf('--desktop') !== -1;
+
 function getClientEnvironment(publicUrl) {
   const raw = Object.keys(process.env)
     .filter(key => REACT_APP.test(key))
@@ -77,6 +80,7 @@ function getClientEnvironment(publicUrl) {
         // This should only be used as an escape hatch. Normally you would put
         // images into the `src` and `import` them in code to get their paths.
         PUBLIC_URL: publicUrl,
+        ELECTRON: isDesktop
       }
     );
   // Stringify all values so we can feed into Webpack DefinePlugin

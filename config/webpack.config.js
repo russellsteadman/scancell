@@ -23,9 +23,12 @@ const ModuleNotFoundPlugin = require('react-dev-utils/ModuleNotFoundPlugin');
 const ForkTsCheckerWebpackPlugin = require('react-dev-utils/ForkTsCheckerWebpackPlugin');
 const typescriptFormatter = require('react-dev-utils/typescriptFormatter');
 const purgecss = require('@fullhuman/postcss-purgecss');
-const PreloadWebpackPlugin = require('preload-webpack-plugin');
+const CspHtmlWebpackPlugin = require('csp-html-webpack-plugin');
 const PrerenderSPAPlugin = require('prerender-spa-plugin');
 const JSDomRenderer = require('@prerenderer/renderer-jsdom'); 
+
+const argv = process.argv.slice(2);
+const isDesktop = argv.indexOf('--desktop') !== -1;
 
 // Source maps are resource heavy and can cause out of memory issue for large source files.
 const shouldUseSourceMap = false;
@@ -562,6 +565,13 @@ module.exports = function(webpackEnv) {
       // In development, this will be an empty string.
       new InterpolateHtmlPlugin(HtmlWebpackPlugin, env.raw),
 
+      isEnvProduction && isDesktop && new CspHtmlWebpackPlugin({
+        'base-uri': "'self'",
+        'object-src': "'none'",
+        'script-src': ["'self'"],
+        'style-src': ["'self'"]
+      }),
+
       /*isEnvProduction && new PreloadWebpackPlugin({
         rel: 'preload',
         include: 'allChunks',
@@ -615,7 +625,7 @@ module.exports = function(webpackEnv) {
       new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/),
       // Generate a service worker script that will precache, and keep up to date,
       // the HTML & assets that are part of the Webpack build.
-      isEnvProduction &&
+      isEnvProduction && !isDesktop &&
         new WorkboxWebpackPlugin.GenerateSW({
           clientsClaim: true,
           exclude: [/\.map$/, /asset-manifest\.json$/],
@@ -630,7 +640,7 @@ module.exports = function(webpackEnv) {
           ],
         }),
 
-      isEnvProduction &&
+      isEnvProduction && !isDesktop &&
         new PrerenderSPAPlugin({
           // Required - The path to the webpack-outputted app to prerender.
           staticDir: paths.appOutput,

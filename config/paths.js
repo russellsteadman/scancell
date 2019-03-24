@@ -66,11 +66,16 @@ const resolveModule = (resolveFn, filePath) => {
 };
 
 // config after eject: we're in ./config/
+const argv = process.argv.slice(2);
+const isDesktop = argv.indexOf('--desktop') !== -1;
+
 module.exports = {
   dotenv: resolveApp('.env'),
   appPath: resolveApp('.'),
-  appBuild: path.join(appDirectory, 'docs', getServedPath(resolveApp('package.json'))),
-  appOutput: resolveApp('docs'),
+  appOutput: resolveApp(isDesktop ? 'desktop' : 'docs'),
+  appBuild: isDesktop
+    ? resolveApp(isDesktop ? 'desktop' : 'docs')
+    : path.join(appDirectory, 'docs', getServedPath(resolveApp('package.json'))),
   appPublic: resolveApp('public'),
   appHtml: resolveApp('public/index.html'),
   appIndexJs: resolveModule(resolveApp, 'src/index'),
@@ -82,7 +87,7 @@ module.exports = {
   proxySetup: resolveApp('src/setupProxy.js'),
   appNodeModules: resolveApp('node_modules'),
   publicUrl: getPublicUrl(resolveApp('package.json')),
-  servedPath: getServedPath(resolveApp('package.json')),
+  servedPath: isDesktop ? './' : getServedPath(resolveApp('package.json')),
 };
 
 
