@@ -3,16 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "main": "desktop.js",
-  "dependencies": {},
   "scripts": {
     "start": "node scripts/start.js",
     "build": "node scripts/build.js",
     "test": "node scripts/test.js",
     "start-desktop": "electron .",
     "build-desktop": "node scripts/build.js --desktop",
-    "build-all": "electron-packager . ScanCell --all",
-    "build-win-64": "electron-packager . --platform win32 --ignore \"^node_modules\" --ignore \"^.github\" --ignore \"^config\" --ignore \"^docs\" --ignore \"^public\" --ignore \"^scripts\" --ignore \"^src\" --ignore \"^src\" --arch x64 --protocol scancell --icon public/icons/icon-512.png --out build",
-    "release": "electron-builder --publish never"
+    "release": "electron-builder"
   },
   "author": "Russell Steadman",
   "description": "Scan Cell is yeast counting software for FEH Nano that counts yeast cells in a microscopic flow channel using local contrast resolution.",
@@ -24,38 +21,50 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
-        },
-        {
-          "target": "portable",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         }
       ],
       "publisherName": "Russell Steadman",
       "icon": "public/icons/icon-256.ico",
-      "publish": false
+      "verifyUpdateCodeSignature": false
     },
     "linux": {
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         }
       ]
     },
-    "mac" : {
+    "mac": {
       "category": "public.app-category.education",
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
-    "publish": false,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "teamtofu",
+        "repo": "scancell",
+        "private": false,
+        "releaseType": "release",
+        "asar": true
+      }
+    ],
     "files": [
       "**/*",
-      "!**/node_modules/*",
       "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
       "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
       "!**/node_modules/*.d.ts",
@@ -68,7 +77,7 @@
       "!**/{appveyor.yml,.travis.yml,circle.yml}",
       "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
       "!**/docs/*",
-      "!**/src/*",
+      "!src/*",
       "!**/public/*",
       "!**/.github/*"
     ]
@@ -154,7 +163,6 @@
     "dotenv-expand": "4.2.0",
     "electron": "^4.1.1",
     "electron-builder": "^20.39.0",
-    "electron-packager": "^13.1.1",
     "eslint": "5.12.0",
     "eslint-config-react-app": "^3.0.8",
     "eslint-loader": "2.1.1",
@@ -194,5 +202,9 @@
     "webpack-manifest-plugin": "2.0.4",
     "workbox-webpack-plugin": "3.6.3",
     "worker-loader": "^2.0.0"
+  },
+  "dependencies": {
+    "electron-updater": "^4.0.6",
+    "electron-log": "^3.0.3"
   }
 }

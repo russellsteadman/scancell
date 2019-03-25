@@ -13,6 +13,9 @@
 /desktop
 /dist
 
+/config/certificate.*
+/config/key.*
+
 # misc
 .DS_Store
 .env.local
