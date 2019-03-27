@@ -3,7 +3,7 @@ import YeastDemo from './yeast.jpg';
 import { SerializeImage, CreateCanvas, DownloadCanvas } from './shared/Utils';
 import UtilWorker from './shared/Util.worker.js';
 import Classy from './shared/Classy';
-import { Microscope } from './shared/Icons';
+import { Microscope, Diamond, Orb } from './shared/Icons';
 import Facts from './shared/Facts';
 
 const cx = Classy([]);
@@ -22,6 +22,9 @@ class App extends Component {
       mCont: 3,
       thresh: 0.5,
       mDist: 3,
+      orbThresh: 0.7,
+      enableDiamond: true,
+      enableOrb: false,
       /* Part completion */
       percent: 0,
       error: false,
@@ -78,7 +81,7 @@ class App extends Component {
       });
     } else if (data.action === 'status') {
       if (data.pass.error) return this.setState({error: true});
-      if (data.pass.percent > this.state.percent + 0.01) this.setState({percent: data.pass.percent});
+      if (data.pass.percent > this.state.percent + 0.01 || data.pass.percent === 0) this.setState({percent: data.pass.percent});
     }
   };
 
@@ -129,7 +132,8 @@ class App extends Component {
   countImage = () => {
     this.setState({
       step: 6,
-      download: null
+      download: null,
+      percent: 0
     }, () => {
       this.worker.postMessage({action: 'count', pass: this.state.points.slice()});
     });
@@ -137,13 +141,16 @@ class App extends Component {
 
   /* Update the web worker config with the state */
   updateConfig = () => {
-    let { wall, res, mDist, mCont, thresh } = this.state;
+    let { wall, res, mDist, mCont, thresh, orbThresh, enableDiamond, enableOrb } = this.state;
     this.worker.postMessage({action: 'config', pass: {
       wall,
       res,
       mDist,
       mCont,
-      thresh
+      thresh,
+      orbThresh,
+      enableDiamond,
+      enableOrb
     }});
   };
 
@@ -151,6 +158,15 @@ class App extends Component {
   numCling(name, ev) {
     this.setState({
       [name]: ev.target.value === '' ? '' : Number(ev.target.value)
+    }, () => {
+      this.updateConfig();
+    });
+  }
+
+  /* Statefully update worker configuration variables */
+  boolShift(name, ev) {
+    this.setState({
+      [name]: !this.state[name]
     }, () => {
       this.updateConfig();
     });
@@ -197,7 +213,7 @@ class App extends Component {
   };
 
   render() {
-    let { wall, res, mCont, mDist, thresh, step, percent, count, factOne, factTwo, installable, download } = this.state;
+    let { wall, res, mCont, mDist, enableDiamond, enableOrb, orbThresh, thresh, step, percent, count, factOne, factTwo, installable, download } = this.state;
 
     return (
       <div className={cx('container')} onDrop={this.fileDrop} onDragEnter={this.noEvent} onDragOver={this.noEvent}>
@@ -312,6 +328,13 @@ class App extends Component {
 
             <h3 className={cx('my-3', 'text-center')}>Processing...</h3>
 
+            <div className={cx('progress')}>
+              <div className={cx('progress-bar', 'bg-royal')} role='progressbar' aria-valuenow={Math.round(percent * 100)}
+              aria-valuemin='0' aria-valuemax='100' style={{width: (percent * 100) + '%'}}>
+                <span className={cx('sr-only')}>{Math.round(percent * 100)}% Complete</span>
+              </div>
+            </div>
+
             <div className={cx('alert', 'alert-info')}>
               <b>Did you know?</b> {factTwo}
             </div>
@@ -333,6 +356,33 @@ class App extends Component {
               </div>
             </a>
 
+            <div className={cx('my-3')}>
+              <div className={cx('d-flex')}>
+                <div>
+                  <div className={cx('btn', {
+                    'btn-success': enableDiamond,
+                    'btn-danger': !enableDiamond
+                  })} onClick={this.boolShift.bind(this, 'enableDiamond')}><Diamond /></div>
+                </div>
+                <div className={cx('w-100', 'container')}>
+                  <h5>Diamond Detection</h5>
+                  <p>Use diamond detection to detect cells that form solid dark dot.</p>
+                </div>
+              </div>
+              <div className={cx('d-flex')}>
+                <div>
+                  <div className={cx('btn', {
+                    'btn-success': enableOrb,
+                    'btn-danger': !enableOrb
+                  })} onClick={this.boolShift.bind(this, 'enableOrb')}><Orb /></div>
+                </div>
+                <div className={cx('w-100', 'container')}>
+                  <h5>Orb Detection</h5>
+                  <p>Use orb detection to detect cells that form dark ring with a light center.</p>
+                </div>
+              </div>
+            </div>
+
             <h4 className={cx('mt-3', 'pb-0')}>Variables</h4>
             <hr/>
 
@@ -351,6 +401,15 @@ class App extends Component {
               <li>Try changing the cell minimum detection distance before changing this variable.</li>
               <li><b>Increase</b> this number if one yeast cell is being counted as many.</li>
               <li><b>Decrease</b> this number if multiple yeast cells are being counted as one.</li>
+            </ul>
+
+            <h5 htmlFor='thresh'>Cell Orb Threshold Coefficient</h5>
+            <input id='orbThresh' type='number' min='0.5' max='0.9' step='0.05' placeholder='Cell Orb Threshold Coefficient' value={orbThresh} onChange={this.numCling.bind(this, 'orbThresh')} className={cx('form-control')}/>
+            <ul>
+              <li>This number should be a whole number between 0.5 and 0.9.</li>
+              <li>Try changing the cell minimum detection distance before changing this variable.</li>
+              <li><b>Increase</b> this number if white space is being detected as orbs.</li>
+              <li><b>Decrease</b> this number if yeast cells are not being detected as orbs.</li>
             </ul>
           </div>) : null}
         </div>

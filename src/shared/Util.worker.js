@@ -1,4 +1,4 @@
-let imageArray, imageWidth, imageHeight, avgGray, cellArray;
+let imageArray, imageWidth, imageHeight, avgGray, cellArray, inPoly, countArray, visualArray;
 
 // Default configuration
 let config = {
@@ -7,6 +7,9 @@ let config = {
     thresh: 0.5,
     mDist: 3,
     mCont: 3,
+    orbThresh: 0.7,
+    enableDiamond: true,
+    enableOrb: false
 };
 
 // Emits percent completion or an error
@@ -112,6 +115,7 @@ const Serialize = ({data, height, width}) => {
 // Cuts off unused parts of an image for visual confirmation
 const Rectangulate = (points) => {
     let newImage = new Uint8ClampedArray(imageArray.length);
+    inPoly = new Uint8ClampedArray(imageArray.length / 4);
     newImage.set(imageArray);
 
     for (let i = 0; i < newImage.length; i += 4) {
@@ -122,6 +126,9 @@ const Rectangulate = (points) => {
             newImage[i] = 0;
             newImage[i + 1] = 0;
             newImage[i + 2] = 0;
+            inPoly[i / 4] = 0;
+        } else {
+            inPoly[i / 4] = 1;
         }
     }
 
@@ -168,12 +175,9 @@ const Detect = (points) => {
 
     // Do initial detection
     for (let i = 0; i < imageArray.length; i += 4) {
-        let x = (i % (4 * imageWidth)) / 4;
-        let y = (i - 4 * x) / imageWidth / 4;
-
         if (i % 80000 === 0) emitStatus(0.4 * i / imageArray.length + 0.1);
 
-        if (pointInPoly(x, y, points) && getContrast(i) <= -1 * config.mCont) {
+        if (inPoly[i / 4] === 1 && getContrast(i) <= -1 * config.mCont) {
             cellArray[i / 4] = 1;
         } else {
             cellArray[i / 4] = 0;
@@ -194,17 +198,16 @@ const Detect = (points) => {
 
     // Remove detection of walls
     for (let i in cellArray) {
-        let x = i % imageWidth;
-        let y = (i - x) / imageWidth;
+        i = Number(i);
 
         if (i % 20000 === 0) emitStatus(0.375 * i / cellArray.length + 0.5);
 
         if (
-            pointInPoly(x, y, points) && 
-            (!pointInPoly(x, y + sideMargin, points)
-            || !pointInPoly(x, y - sideMargin, points)
-            || !pointInPoly(x - sideMargin, y, points)
-            || !pointInPoly(x + sideMargin, y, points))
+            inPoly[i] && 
+            (!inPoly[i + sideMargin]
+            || !inPoly[i - sideMargin]
+            || !inPoly[i + sideMargin * imageWidth]
+            || !inPoly[i - sideMargin * imageWidth])
         ) {
             // DestroyAround(i);
             cellArray[i] = 0;
@@ -262,7 +265,7 @@ const MaxDiamond = (i, distance) => {
     let detectedPoints = 0;
 
     for (let a in coords) {
-        if (typeof cellArray[coords[a]] === 'number' && cellArray[coords[a]] === 1) {
+        if (typeof countArray[coords[a]] === 'number' && countArray[coords[a]] === 1) {
             detectedPoints++;
         }
     }
@@ -275,44 +278,142 @@ const MaxDiamond = (i, distance) => {
 const DiamondCount = (points) => {
     let count = 0;
 
-    let arrayCopy = new Uint8Array(cellArray.length);
-    arrayCopy.set(cellArray);
-    let arrayCopyTwo = new Uint8Array(imageArray.length);
-    arrayCopyTwo.set(imageArray);
-
-    for (let i in cellArray) {
+    for (let i in countArray) {
         i = Number(i);
-        if (cellArray[i] === 1) {
+        if (countArray[i] === 1) {
             let distance = MaxDiamond(i, 1);
             if (distance >= config.mDist) {
                 count++;
                 let coords = DiamondCoords(i, distance);
                 for (let o in coords) {
-                    cellArray[coords[o]] = 0;
+                    countArray[coords[o]] = 0;
                 }
-                imageArray[i*4] = 0;
-                imageArray[i*4 + 1] = 0;
-                imageArray[i*4 + 2] = 0;
-                imageArray[i*4 + 4] = 255;
-                imageArray[i*4 + 5] = 255;
-                imageArray[i*4 + 6] = 0;
+                visualArray[i*4] = 0;
+                visualArray[i*4 + 1] = 0;
+                visualArray[i*4 + 2] = 0;
+                visualArray[i*4 + 4] = 255;
+                visualArray[i*4 + 5] = 255;
+                visualArray[i*4 + 6] = 0;
             }
         }
     }
 
-    cellArray.set(arrayCopy);
+    return count;
+};
+
+// Finds the coordinates of a circle of distance x
+const CircleCoords = (i, distance) => {
+    let coords = [];
+    i = Number(i);
+    for (let o = -distance; o <= distance; o++) {
+        for (let u = -distance; u <= distance; u++) {
+            if (o * o + u * u <= distance * distance) {
+                coords.push(i + o * imageWidth + u);
+            }
+        }
+    }
+    return coords;
+};
+
+const OrbMatch = (i, distance) => {
+    const piFour = Math.round(0.707 * distance);
+    const piSix = Math.round(0.5 * distance);
+    const piThree = Math.round(0.866 * distance);
+
+    const orb = [
+        i + distance,
+        i - distance,
+        i + distance * imageWidth,
+        i - distance * imageWidth,
+        i - piFour * imageWidth - piFour,
+        i - piFour * imageWidth + piFour,
+        i + piFour * imageWidth - piFour,
+        i + piFour * imageWidth + piFour,
+        i - piSix * imageWidth + piThree,
+        i - piSix * imageWidth - piThree,
+        i + piSix * imageWidth + piThree,
+        i + piSix * imageWidth - piThree,
+        i - piThree * imageWidth + piSix,
+        i - piThree * imageWidth - piSix,
+        i + piThree * imageWidth + piSix,
+        i + piThree * imageWidth - piSix
+    ];
+
+    let matchOut = 0;
+
+    for (let i in orb) {
+        if (countArray[orb[i]] === 1) matchOut += 1;
+    }
+
+    let matches = matchOut / orb.length >= config.orbThresh;
+    if (matches) {
+        for (let i in orb) {
+            visualArray[orb[i]*4] = 0;
+            visualArray[orb[i]*4 + 1] = 255;
+            visualArray[orb[i]*4 + 2] = 255;
+            visualArray[orb[i]*4 + 4] = 0;
+            visualArray[orb[i]*4 + 5] = 0;
+            visualArray[orb[i]*4 + 6] = 0;
+        }
+        
+    }
+    return matches;
+};
+
+const OrbCount = (points) => {
+    // two vars
+    // outer orb, orb coefficient
+    let count = 0;
+    const orbMin = config.mDist - 2 >= 3 ? config.mDist - 2 : 3;
+
+    for (let plus = 2; plus >= 0; plus--) {
+        for (let i in countArray) {
+            if (!inPoly[i]) continue;
+            i = Number(i);
+            if (OrbMatch(i, orbMin + plus)) {
+                count++;
+                let coords = CircleCoords(i, orbMin + plus);
+                for (let o in coords) {
+                    countArray[coords[o]] = 0;
+                }
+                visualArray[i*4] = 0;
+                visualArray[i*4 + 1] = 0;
+                visualArray[i*4 + 2] = 0;
+                visualArray[i*4 + 4] = 255;
+                visualArray[i*4 + 5] = 255;
+                visualArray[i*4 + 6] = 0;
+            }
+        }
+        emitStatus((3 - plus) * .33 * (config.enableDiamond ? 0.8 : 1));
+    }
+
+    return count;
+};
+
+const Count = (points) => {
+    let count = 0;
+
+    emitStatus(0);
+
+    countArray = new Uint8Array(cellArray.length);
+    countArray.set(cellArray);
+    visualArray = new Uint8Array(imageArray.length);
+    visualArray.set(imageArray);
+
+    emitStatus(0.05);
+
+    if (config.enableOrb) count += OrbCount(points);
+    if (config.enableDiamond || !config.enableOrb) count += DiamondCount(cellArray);
 
     postMessage({
         action: 'counted',
         pass: {
-            data: imageArray,
+            data: visualArray,
             height: imageHeight,
             width: imageWidth,
             count
         }
     });
-
-    imageArray.set(arrayCopyTwo);
 };
 
 // Respond to messages from the main thread
@@ -326,7 +427,7 @@ onmessage = ({data}) => {
         } else if (data.action === 'detect') {
             Detect(data.pass);
         } else if (data.action === 'count') {
-            DiamondCount(data.pass);
+            Count(data.pass);
         } else if (data.action === 'config') {
             config = {...config, ...data.pass};
             console.log('Config:', config);
