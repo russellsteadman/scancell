@@ -335,7 +335,7 @@ class App extends Component {
               </div>
             </div>
 
-            <div className={cx('alert', 'alert-info')}>
+            <div className={cx('alert', 'alert-info', 'my-3')}>
               <b>Did you know?</b> {factTwo}
             </div>
           </div>) : null}
