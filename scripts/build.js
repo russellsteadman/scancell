@@ -66,6 +66,10 @@ checkBrowsers(paths.appPath, isInteractive)
     fs.emptyDirSync(paths.appOutput);
     // Merge with the public folder
     copyPublicFolder();
+
+    if (process.env.PUBLIC_URL) {
+      fs.writeFileSync(path.join(paths.appBuild, './CNAME'), process.env.PUBLIC_URL.split('/')[2]);
+    }
     // Start the webpack build
     return build(previousFileSizes);
   })
