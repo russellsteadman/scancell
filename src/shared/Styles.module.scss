@@ -58,12 +58,17 @@ a.no-link {
   }
 }
 
+.baseline {
+  vertical-align: -.125rem;
+}
+
 .dragdrop {
   text-align: center;
-  background-color: #ccc;
+  background-color: #cccccc;
   width: 100%;
   min-height: 45vh;
   border-radius: 1em;
+  position: relative;
 
   .or {
     font-size: 1.5em;
@@ -75,6 +80,55 @@ a.no-link {
   }
 }
 
+.dragdrop::after {
+  content: "";
+  background-image: url(./images/file.png);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
+  opacity: 0.1;
+  top: 3vh;
+  left: 0;
+  bottom: 3vh;
+  right: 0;
+  position: absolute;
+  z-index: 2;
+}
+
 .muted {
   color: #4A5154;
+}
+
+.modal-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  outline: 0;
+  background-color: rgba(0, 0, 0, .7);
+  animation: fade-modal-bg 500ms ease-in-out;
+  > div {
+      animation: fade-modal 500ms ease-out;
+  }
+}
+
+@keyframes fade-modal-bg {
+  from {
+      background-color: rgba(0, 0, 0, 0);
+  }
+  to {
+      background-color: rgba(0, 0, 0, .7);
+  }
+}
+
+@keyframes fade-modal {
+  from {
+      opacity: 0.5;
+  }
+  to {
+      opacity: 1;
+  }
 }

@@ -3,8 +3,11 @@ import YeastDemo from './yeast.jpg';
 import { SerializeImage, CreateCanvas, DownloadCanvas } from './shared/Utils';
 import UtilWorker from './shared/Util.worker.js';
 import Classy from './shared/Classy';
-import { Microscope, Diamond, Orb } from './shared/Icons';
+import { Modal } from './shared/Modal';
+import { Microscope, Diamond, Orb, Picture } from './shared/Icons';
 import Facts from './shared/Facts';
+import YeastInstructions from './shared/images/yeast-instructions.jpg';
+import YeastCropped from './shared/images/yeast-cropped.jpg';
 
 const cx = Classy([]);
 
@@ -38,7 +41,10 @@ class App extends Component {
       /* PWA install */
       installable: false,
       /* Canvas download state */
-      download: null
+      download: null,
+      /* Show hints */
+      h1: false,
+      h2: false
     };
 
     // Set up web worker
@@ -213,7 +219,7 @@ class App extends Component {
   };
 
   render() {
-    let { wall, res, mCont, mDist, enableDiamond, enableOrb, orbThresh, thresh, step, percent, count, factOne, factTwo, installable, download } = this.state;
+    let { wall, res, mCont, mDist, enableDiamond, enableOrb, orbThresh, thresh, step, percent, count, factOne, factTwo, installable, download, h1, h2 } = this.state;
 
     return (
       <div className={cx('container')} onDrop={this.fileDrop} onDragEnter={this.noEvent} onDragOver={this.noEvent}>
@@ -221,16 +227,17 @@ class App extends Component {
           <h1 className={cx('mb-1')}>Scan Cell</h1>
           <div className={cx('small', 'muted')}><i>Yeast Counter for FEH Nano</i></div>
         </header>
+
         <div>
           <div className={cx('ycanvas', {hide: step === 1 || step === 4 || step === 6})}>
             <canvas ref={(ref) => this._canvas = ref} onClick={this.canvasClick}></canvas>
           </div>
 
           {step === 1 ? (<div>
-            <p>Upload a photo for processing. Photos have highest accuracy when they are landscape, and when HDR (high dynamic range) enabled.</p>
+            <p>Upload a photo for processing. Photos have highest accuracy when they are landscape, and when HDR (high dynamic range) is enabled. Your photo can be uncropped.</p>
 
             <button className={cx('btn', 'btn-dark', 'btn-block', 'btn-lg')} onClick={() => this._file.click()}>
-              Select Photo
+              Select Photo <span className={cx('d-inline-block', 'baseline')}><Picture /></span>
             </button>
 
             <div className={cx('dragdrop', 'my-2', 'd-flex', 'justify-content-center', 'align-items-center')}>
@@ -246,13 +253,32 @@ class App extends Component {
           </div>) : null}
 
           {step === 2 ? (<div>
-            <p>Click on the <b>inner corners</b> of the channel in the following order: <b>bottom left</b> &#x2199;, <b>top left</b> &#x2196;, <b>top right</b> &#x2197;, and <b>bottom right</b> &#x2198;.</p>
+            <p>Now let's define the bounding points of the microchannel. Click on the <b>inner corners</b> of the channel in the following order: <b>bottom left</b> &#x2199;, <b>top left</b> &#x2196;, <b>top right</b> &#x2197;, and <b>bottom right</b> &#x2198;.</p>
+
+            {/*{!h1 && (<p>Confused about where the points should be placed? See <a href='#view-example' onClick={() => this.setState({h1: true})}>an example</a>.</p>)}
+
+            {h1 && (<div className={cx('my-3')}>
+              <p>Note that the points are on the walls of the microchannel, not inside of them.</p>
+              <img src={YeastInstructions} alt='Yeast Instructions' className={cx('img-fluid', 'mx-auto', 'd-block')}/>
+            </div>)}*/}
+
+            <p>Confused about where the points should be placed? See <a href='#view-example' onClick={() => this.setState({h1: true})}>an example</a>.</p>
+
+            {h1 && (<Modal content={(<div>
+              <p>Note that the points are on the walls of the microchannel, not inside of them.</p>
+              <img src={YeastInstructions} alt='Yeast Instructions' className={cx('img-fluid', 'mx-auto', 'd-block')}/>
+            </div>)} close={() => this.setState({h1: false})} title='Microchannel Cropping' />)}
 
             <button className={cx('btn', 'btn-dark', 'btn-block')} onClick={() => this.setState({step: 1, pointStep: 0})}>Change Image</button>
           </div>) : null}
 
           {step === 3 ? (<div>
-            <p>Does this area look correct?</p>
+            <p>Does this area look correct?{!h2 && (<span> If you are unsure, you can view <a href='#view-example' onClick={() => this.setState({h2: true})}>an example</a>.</span>)}</p>
+
+            {h2 && (<Modal content={(<div>
+              <p>Note that the walls of the microchannel are still partially visible &mdash; this is expected.</p>
+              <img src={YeastCropped} alt='Yeast Cropped Example' className={cx('img-fluid', 'mx-auto', 'd-block')}/>
+            </div>)} close={() => this.setState({h2: false})} title='Microchannel Cropping' />)}
 
             <div className={cx('btn-group', 'w-100')}>
               <button className={cx('btn', 'btn-light', 'w-100')} onClick={this.recopyImage}>No</button>
@@ -356,6 +382,9 @@ class App extends Component {
               </div>
             </a>
 
+            <h4 className={cx('mt-3', 'pb-0')}>Detection Method</h4>
+            <hr/>
+
             <div className={cx('my-3')}>
               <div className={cx('d-flex')}>
                 <div>
@@ -365,7 +394,7 @@ class App extends Component {
                   })} onClick={this.boolShift.bind(this, 'enableDiamond')}><Diamond /></div>
                 </div>
                 <div className={cx('w-100', 'container')}>
-                  <h5>Diamond Detection</h5>
+                  <h5>Diamond Detection ({enableDiamond ? 'Enabled' : 'Disabled'})</h5>
                   <p>Use diamond detection to detect cells that form solid dark dot.</p>
                 </div>
               </div>
@@ -377,7 +406,7 @@ class App extends Component {
                   })} onClick={this.boolShift.bind(this, 'enableOrb')}><Orb /></div>
                 </div>
                 <div className={cx('w-100', 'container')}>
-                  <h5>Orb Detection</h5>
+                  <h5>Orb Detection ({enableOrb ? 'Enabled' : 'Disabled'})</h5>
                   <p>Use orb detection to detect cells that form dark ring with a light center.</p>
                 </div>
               </div>
@@ -413,10 +442,13 @@ class App extends Component {
             </ul>
           </div>) : null}
         </div>
+
         <footer className={cx('py-2')}>
           <hr/>
+
           <div className={cx('text-center')}>{installable ? <span><a href='#install' onClick={this.install}>Install Web App</a> &middot; </span> : null}<a href='https://go.osu.edu/yeastapp' target='_blank' rel='noopener noreferrer'>Download Client</a> &middot; <a href='https://github.com/teamtofu/scancell' target='_blank' rel='noopener noreferrer'>GitHub</a> &middot; <a href={'https://github.com/teamtofu/scancell/issues/new?assignees=teamtofu&labels=bug%2C+unresolved&template=bug_report.md&title='} target='_blank' rel='noopener noreferrer'>Report an Issue</a></div>
-          <div className={cx('pt-2', 'pb-3')}>Scan Cell v{process.env.VERSION}. Copyright &copy; 2019 <a href={'https://www.russellsteadman.com/?utm_source=scancell&utm_medium=copyright'} target='_blank' rel='noopener noreferrer'>Russell Steadman</a>. Some Rights Reserved. This work is licensed under a <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='license noopener noreferrer'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.</div>
+
+          <div className={cx('pt-2', 'pb-4')}>Scan Cell v{process.env.VERSION}. Copyright &copy; 2019 <a href={'https://www.russellsteadman.com/?utm_source=scancell&utm_medium=copyright'} target='_blank' rel='noopener noreferrer'>Russell Steadman</a>. Some Rights Reserved. This work is licensed under a <a href='https://creativecommons.org/licenses/by-sa/4.0/' target='_blank' rel='license noopener noreferrer'>Creative Commons Attribution-ShareAlike 4.0 International License</a>.</div>
         </footer>
       </div>
     );
