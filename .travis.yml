@@ -1,5 +1,0 @@
-language: node_js
-node_js:
-  - node
-env:
-  - PUBLIC_URL=https://scancell.russellsteadman.com/

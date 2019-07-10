@@ -35,6 +35,7 @@ class App extends Component {
       count: 0,
       /* Processing step */
       step: 1,
+      painter: 5,
       /* Fun facts */
       factOne: Facts[Math.ceil(Math.random() * Facts.length) - 1],
       factTwo: Facts[Math.ceil(Math.random() * Facts.length) - 1],
@@ -219,7 +220,7 @@ class App extends Component {
   };
 
   render() {
-    let { wall, res, mCont, mDist, enableDiamond, enableOrb, orbThresh, thresh, step, percent, count, factOne, factTwo, installable, download, h1, h2 } = this.state;
+    let { wall, res, mCont, mDist, enableDiamond, enableOrb, orbThresh, thresh, step, percent, count, factOne, factTwo, installable, download, painter, h1, h2 } = this.state;
 
     return (
       <div className={cx('container')} onDrop={this.fileDrop} onDragEnter={this.noEvent} onDragOver={this.noEvent}>
@@ -255,12 +256,21 @@ class App extends Component {
           {step === 2 ? (<div>
             <p>Now let's define the bounding points of the microchannel. Click on the <b>inner corners</b> of the channel in the following order: <b>bottom left</b> &#x2199;, <b>top left</b> &#x2196;, <b>top right</b> &#x2197;, and <b>bottom right</b> &#x2198;.</p>
 
-            {/*{!h1 && (<p>Confused about where the points should be placed? See <a href='#view-example' onClick={() => this.setState({h1: true})}>an example</a>.</p>)}
+            <p>Confused about where the points should be placed? See <a href='#view-example' onClick={() => this.setState({h1: true})}>an example</a>.</p>
 
-            {h1 && (<div className={cx('my-3')}>
+            {h1 && (<Modal content={(<div>
               <p>Note that the points are on the walls of the microchannel, not inside of them.</p>
               <img src={YeastInstructions} alt='Yeast Instructions' className={cx('img-fluid', 'mx-auto', 'd-block')}/>
-            </div>)}*/}
+            </div>)} close={() => this.setState({h1: false})} title='Microchannel Cropping' />)}
+
+            <button className={cx('btn', 'btn-dark', 'btn-block')} onClick={() => this.setState({step: 1, pointStep: 0})}>Change Image</button>
+          </div>) : null}
+
+          {step === 22 ? (<div>
+            <p>Remove any inperfections in the channel by covering them.</p>
+
+            <h5 htmlFor='painter'>Painter Size</h5>
+            <input id='painter' type='number' min='1' step='1' placeholder='Painter Size' value={painter} onChange={({target}) => this.setState({painter: Number(target.value)})} className={cx('form-control')}/>
 
             <p>Confused about where the points should be placed? See <a href='#view-example' onClick={() => this.setState({h1: true})}>an example</a>.</p>
 
